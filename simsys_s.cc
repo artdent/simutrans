@@ -510,37 +510,7 @@ static void internal_GetEvents(bool const wait)
 				case SDLK_PAUSE:    code = 16;                            break;
 
 				default:
-					if (event.key.keysym.unicode != 0) {
-						code = event.key.keysym.unicode;
-						if (event.key.keysym.unicode == 22 /* ^V */) {
-#if 0	// disabled as internal buffer is used; code is retained for possible future implementation of dr_paste()
-							// X11 magic ... not tested yet!
-							SDL_SysWMinfo si;
-							if (SDL_GetWMInfo(&si) && si.subsystem == SDL_SYSWM_X11) {
-								// clipboard under X11
-								XEvent         evt;
-								Atom           sseln   = XA_CLIPBOARD(si.x11.display);
-								Atom           target  = XA_STRING;
-								unsigned char* sel_buf = 0;
-								unsigned long  sel_len = 0;	/* length of sel_buf */
-								unsigned int   context = XCLIB_XCOUT_NONE;
-								xcout(si.x11.display, si.x11.window, evt, sseln, target, &sel_buf, &sel_len, &context);
-								/* fallback is needed. set XA_STRING to target and restart the loop. */
-								if (context != XCLIB_XCOUT_FALLBACK) {
-									// something in clipboard
-									SDL_Event new_event;
-									new_event.type           = SDL_KEYDOWN;
-									new_event.key.keysym.sym = SDLK_UNKNOWN;
-									for (unsigned char const* chr = sel_buf; sel_len-- >= 0; ++chr) {
-										new_event.key.keysym.sym = *chr == '\n' ? '\r' : *chr;
-										SDL_PushEvent(&new_event);
-									}
-									free(sel_buf);
-								}
-							}
-#endif
-						}
-					} else if (0 < sym && sym < 127) {
+					if (0 < sym && sym < 127) {
 						code = event.key.keysym.sym; // try with the ASCII code
 					} else {
 						code = 0;
