@@ -436,9 +436,6 @@ static void internal_GetEvents(bool const wait)
 				case SDL_BUTTON_LEFT: sys_event.code = SIM_MOUSE_LEFTBUTTON;  break;
 				case SDL_BUTTON_MIDDLE: sys_event.code = SIM_MOUSE_MIDBUTTON;   break;
 				case SDL_BUTTON_RIGHT: sys_event.code = SIM_MOUSE_RIGHTBUTTON; break;
-				// Probably wrong
-				case SDL_BUTTON_X1: sys_event.code = SIM_MOUSE_WHEELUP;     break;
-				case SDL_BUTTON_X2: sys_event.code = SIM_MOUSE_WHEELDOWN;   break;
 			}
 			break;
 
@@ -453,6 +450,16 @@ static void internal_GetEvents(bool const wait)
 				case SDL_BUTTON_LEFT: sys_event.code = SIM_MOUSE_LEFTUP;  break;
 				case SDL_BUTTON_MIDDLE: sys_event.code = SIM_MOUSE_MIDUP;   break;
 				case SDL_BUTTON_RIGHT: sys_event.code = SIM_MOUSE_RIGHTUP; break;
+			}
+			break;
+
+		case SDL_MOUSEWHEEL:
+			sys_event.type    = SIM_MOUSE_BUTTONS;
+			sys_event.key_mod = ModifierKeys();
+			if (event.wheel.y > 0) {
+				sys_event.code = SIM_MOUSE_WHEELUP;
+			} else {
+				sys_event.code = SIM_MOUSE_WHEELDOWN;
 			}
 			break;
 
