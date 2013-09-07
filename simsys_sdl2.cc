@@ -107,7 +107,7 @@ int dr_os_open(int w, int const h, int const fullscreen)
 	height = h;
 
 	Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL;
-	flags |= (fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE);
+	flags |= (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE);
 	window = SDL_CreateWindow(SIM_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, flags);
 	if (window == NULL) {
 		fprintf(stderr, "Couldn't open the window: %s\n", SDL_GetError());
@@ -118,6 +118,11 @@ int dr_os_open(int w, int const h, int const fullscreen)
 	if (renderer == NULL) {
 		fprintf(stderr, "Couldn't create renderer: %s\n", SDL_GetError());
 		return false;
+	}
+	if (fullscreen) {
+		// In SDL_WINDOW_FULLSCREEN_DESKTOP mode, the width and height parameters
+		// to SDL_CreateWindow are ignored and need to be set here instead.
+		SDL_RenderSetLogicalSize(renderer, w, h);
 	}
 
 	if (!internal_create_surfaces()) {
