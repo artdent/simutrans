@@ -2,7 +2,7 @@ CFG ?= default
 -include config.$(CFG)
 
 
-BACKENDS      = allegro gdi opengl sdl mixer_sdl posix
+BACKENDS      = allegro gdi opengl sdl sdl2 mixer_sdl posix
 COLOUR_DEPTHS = 0 16
 OSTYPES       = amiga beos cygwin freebsd haiku linux mingw mac
 
@@ -76,8 +76,6 @@ else
 endif
 
 ALLEGRO_CONFIG ?= allegro-config
-SDL_CONFIG     ?= sdl-config
-
 
 ifneq ($(OPTIMISE),)
     CFLAGS += -O3
@@ -457,9 +455,16 @@ ifeq ($(BACKEND),gdi)
 endif
 
 
-ifeq ($(BACKEND),sdl)
+ifneq ($(findstring $(BACKEND), sdl mixer_sdl),)
   SOURCES += simsys_s.cc
-  CFLAGS  += -DUSE_16BIT_DIB
+  SDL_CONFIG ?= sdl-config
+else ifeq ($(BACKEND),sdl2)
+  SOURCES += simsys_sdl2.cc
+  SDL_CONFIG ?= sdl2-config
+endif
+
+ifneq ($(findstring $(BACKEND), sdl sdl2),)
+  SOURCES += simsys_sdl_cursors.cc
   ifeq ($(OSTYPE),mac)
     # Core Audio (Quicktime) base sound system routines
     SOURCES += sound/core-audio_sound.mm
@@ -495,9 +500,8 @@ ifeq ($(BACKEND),sdl)
   LIBS   += $(SDL_LDFLAGS)
 endif
 
-
 ifeq ($(BACKEND),mixer_sdl)
-  SOURCES += simsys_s.cc
+  SOURCES += simsys_sdl_cursors.cc
   SOURCES += sound/sdl_mixer_sound.cc
   SOURCES += music/sdl_midi.cc
   CFLAGS  += -DUSE_16BIT_DIB

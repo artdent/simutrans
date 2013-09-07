@@ -21,62 +21,8 @@
 #include "simevent.h"
 #include "display/simgraph.h"
 #include "simdebug.h"
+#include "simsys_sdl_cursors.h"
 
-
-static Uint8 hourglass_cursor[] = {
-	0x3F, 0xFE, //   *************
-	0x30, 0x06, //   **         **
-	0x3F, 0xFE, //   *************
-	0x10, 0x04, //    *         *
-	0x10, 0x04, //    *         *
-	0x12, 0xA4, //    *  * * *  *
-	0x11, 0x44, //    *  * * *  *
-	0x18, 0x8C, //    **   *   **
-	0x0C, 0x18, //     **     **
-	0x06, 0xB0, //      ** * **
-	0x03, 0x60, //       ** **
-	0x03, 0x60, //       **H**
-	0x06, 0x30, //      ** * **
-	0x0C, 0x98, //     **     **
-	0x18, 0x0C, //    **   *   **
-	0x10, 0x84, //    *    *    *
-	0x11, 0x44, //    *   * *   *
-	0x12, 0xA4, //    *  * * *  *
-	0x15, 0x54, //    * * * * * *
-	0x3F, 0xFE, //   *************
-	0x30, 0x06, //   **         **
-	0x3F, 0xFE  //   *************
-};
-
-static Uint8 hourglass_cursor_mask[] = {
-	0x3F, 0xFE, //   *************
-	0x3F, 0xFE, //   *************
-	0x3F, 0xFE, //   *************
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x0F, 0xF8, //     *********
-	0x07, 0xF0, //      *******
-	0x03, 0xE0, //       *****
-	0x03, 0xE0, //       **H**
-	0x07, 0xF0, //      *******
-	0x0F, 0xF8, //     *********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x1F, 0xFC, //    ***********
-	0x3F, 0xFE, //   *************
-	0x3F, 0xFE, //   *************
-	0x3F, 0xFE  //   *************
-};
-
-static Uint8 blank_cursor[] = {
-	0x0,
-	0x0,
-};
 
 static SDL_Surface *screen;
 static int width = 16;
@@ -87,10 +33,6 @@ static int async_blit = 0;
 
 // try to use hardware double buffering ...
 static int use_hw = 0;
-
-static SDL_Cursor* arrow;
-static SDL_Cursor* hourglass;
-static SDL_Cursor* blank;
 
 #if MULTI_THREAD>1
 #include "utils/simthread.h"
@@ -242,11 +184,9 @@ int dr_os_open(int w, int const h, int const fullscreen)
 
 	// set the caption for the window
 	SDL_WM_SetCaption(SIM_TITLE, 0);
-	SDL_ShowCursor(0);
-	arrow = SDL_GetCursor();
-	hourglass = SDL_CreateCursor(hourglass_cursor, hourglass_cursor_mask, 16, 22, 8, 11);
-	blank = SDL_CreateCursor(blank_cursor, blank_cursor, 8, 2, 0, 0);
 
+	SDL_ShowCursor(0);
+	create_sdl_cursors();
 	SDL_ShowCursor(1);
 
 	display_set_actual_width( w );
@@ -261,8 +201,7 @@ void dr_os_close()
 	// make sure redraw thread is waiting before closing
 	pthread_mutex_lock( &redraw_mutex );
 #endif
-	SDL_FreeCursor(hourglass);
-	SDL_FreeCursor(blank);
+	free_sdl_cursors();
 	// Hajo: SDL doc says, screen is free'd by SDL_Quit and should not be
 	// free'd by the user
 	// SDL_FreeSurface(screen);
@@ -404,13 +343,6 @@ void dr_textur(int xp, int yp, int w, int h)
 void move_pointer(int x, int y)
 {
 	SDL_WarpMouse((Uint16)x, (Uint16)y);
-}
-
-
-// set the mouse cursor (pointer/load)
-void set_pointer(int loading)
-{
-	SDL_SetCursor(loading ? hourglass : arrow);
 }
 
 
@@ -663,12 +595,6 @@ void GetEventsNoWait(void)
 	sys_event.code = 0;
 
 	internal_GetEvents(false);
-}
-
-
-void show_pointer(int yesno)
-{
-	SDL_SetCursor((yesno != 0) ? arrow : blank);
 }
 
 
