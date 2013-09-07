@@ -31,9 +31,6 @@ static SDL_Texture *screen_tx;
 static int width = 16;
 static int height = 16;
 
-// switch off is a little faster (<3%)
-static int sync_blit = 0;
-
 // Drop events that are fired frequently that we aren't interested in.
 // The internal_GetEvents function expects that events excluding SDL_MOUSEMOTION
 // come in approximately one at a time and are all more or less interesting.
@@ -55,14 +52,12 @@ static int filter_SDL_event(void* /* unused userdata */, SDL_Event* event)
  * Schnittstelle untergebracht
  * -> init,open,close
  */
-bool dr_os_init(const int* parameter)
+bool dr_os_init(const int*)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		return false;
 	}
-
-	sync_blit = parameter[1];
 
 	// prepare for next event
 	sys_event.type = SIM_NOEVENT;
@@ -113,13 +108,6 @@ bool internal_create_surfaces() {
 // open the window
 int dr_os_open(int w, int const h, int const fullscreen)
 {
-	// some cards need those alignments
-	// especially 64bit want a border of 8bytes
-	w = (w + 15) & 0x7FF0;
-	if(  w<=0  ) {
-		w = 16;
-	}
-
 	width = w;
 	height = h;
 
@@ -168,12 +156,6 @@ int dr_textur_resize(unsigned short** const textur, int w, int const h)
 	SDL_UnlockTexture(screen_tx);
 
 	display_set_actual_width( w );
-	// some cards need those alignments
-	// especially 64bit want a border of 8bytes
-	w = (w + 15) & 0x7FF0;
-	if(  w<=0  ) {
-		w = 16;
-	}
 
 	if(  w!=screen->w  ||  h!=screen->h  ) {
 
@@ -220,7 +202,6 @@ unsigned int get_system_color(unsigned int r, unsigned int g, unsigned int b)
 
 void dr_prepare_flush()
 {
-	return;
 }
 
 
@@ -261,7 +242,7 @@ void move_pointer(int x, int y)
 int dr_screenshot(const char *filename, int x, int y, int w, int h)
 {
 #ifdef WIN32
-	if(  dr_screenshot_png(filename, w, h, width, ((unsigned short *)(screen->pixels))+x+y*width, screen->format->BitsPerPixel )  ) {
+	if(  dr_screenshot_png(filename, w, h, width, static_cast<unsigned short *>(screen->pixels)+x+y*width, screen->format->BitsPerPixel )  ) {
 		return 1;
 	}
 #endif
@@ -454,7 +435,9 @@ static void internal_GetEvents(bool const wait)
 			sys_event.type = SIM_KEYBOARD;
 			sys_event.key_mod = ModifierKeys();
 			size_t len = 0;
-			sys_event.code = utf8_to_utf16((utf8 *)event.text.text, &len);
+			// reinterpret_cast is necessary to allow converting char* to unsigned char*,
+			// which is safe here.
+			sys_event.code = utf8_to_utf16(reinterpret_cast<utf8*>(event.text.text), &len);
 			break;
 		}
 
