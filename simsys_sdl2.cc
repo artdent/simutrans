@@ -261,7 +261,12 @@ static inline unsigned int ModifierKeys(void)
 
 	return
 		(mod & KMOD_SHIFT ? 1 : 0) |
-		(mod & KMOD_CTRL  ? 2 : 0);
+		(mod & KMOD_CTRL  ? 2 : 0)
+#ifdef __APPLE__
+		// Treat the Command key as a control key.
+		| (mod & KMOD_GUI ? 2 : 0)
+#endif
+		;
 }
 
 
