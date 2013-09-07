@@ -65,12 +65,13 @@ static SDL_AudioSpec output_audio_format;
 
 void sdl_sound_callback(void *, Uint8 * stream, int len)
 {
-	int c;
+	// SDL 2 requires the output stream to be fully written on every callback.
+	memset(stream, 0, len);
 
 	/*
 	* add all the sample that need to be played
 	*/
-	for (c = 0; c < CHANNELS; c++) {
+	for (int c = 0; c < CHANNELS; c++) {
 
 		/*
 		* only do something, if the channel is used
