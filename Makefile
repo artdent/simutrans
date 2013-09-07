@@ -463,7 +463,7 @@ else ifeq ($(BACKEND),sdl2)
   SDL_CONFIG ?= sdl2-config
 endif
 
-ifneq ($(findstring $(BACKEND), sdl sdl2),)
+ifeq ($(BACKEND),sdl)
   SOURCES += simsys_sdl_cursors.cc
   ifeq ($(OSTYPE),mac)
     # Core Audio (Quicktime) base sound system routines
@@ -488,6 +488,38 @@ ifneq ($(findstring $(BACKEND), sdl sdl2),)
       ifeq  ($(WIN32_CONSOLE),)
         SDL_LDFLAGS += -mwindows
       endif
+    endif
+  else
+    SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
+    SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
+    ifneq  ($(WIN32_CONSOLE),)
+      SDL_LDFLAGS += -mconsole
+    endif
+  endif
+  CFLAGS += $(SDL_CFLAGS)
+  LIBS   += $(SDL_LDFLAGS)
+endif
+
+ifeq ($(BACKEND),sdl2)
+  SOURCES += simsys_sdl_cursors.cc
+  ifeq ($(OSTYPE),mac)
+    # Core Audio (Quicktime) base sound system routines
+    SOURCES += sound/core-audio_sound.mm
+    SOURCES += music/core-audio_midi.mm
+    LIBS    += -framework Foundation -framework QTKit
+  else
+    SOURCES  += sound/sdl_sound.cc
+    ifeq ($(findstring $(OSTYPE), cygwin mingw),)
+      SOURCES += music/no_midi.cc
+    else
+      SOURCES += music/w32_midi.cc
+    endif
+  endif
+  ifeq ($(SDL_CONFIG),)
+    SDL_CFLAGS  := -I$(MINGDIR)/include/SDL -Dmain=SDL_main
+    SDL_LDFLAGS := -lSDL2main -lSDL2
+    ifeq  ($(WIN32_CONSOLE),)
+      SDL_LDFLAGS += -mwindows
     endif
   else
     SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
