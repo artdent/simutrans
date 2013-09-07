@@ -90,7 +90,7 @@ resolution dr_query_screen_resolution()
 bool internal_create_surfaces() {
 	// The pixel format needs to match the graphics code within simgraph16.cc.
 	// Note that alpha is handled by simgraph16, not by SDL.
-	Uint32 pixel_format = SDL_PIXELFORMAT_RGB555;
+	Uint32 pixel_format = SDL_PIXELFORMAT_RGB565;
 
 	screen_tx = SDL_CreateTexture(renderer, pixel_format, SDL_TEXTUREACCESS_STREAMING, width, height);
 	if (screen_tx == NULL) {
