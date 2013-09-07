@@ -31,30 +31,14 @@ static SDL_Texture *screen_tx;
 static int width = 16;
 static int height = 16;
 
-// Drop events that are fired frequently that we aren't interested in.
-// The internal_GetEvents function expects that events excluding SDL_MOUSEMOTION
-// come in approximately one at a time and are all more or less interesting.
-static int filter_SDL_event(void* /* unused userdata */, SDL_Event* event)
-{
-	switch (event->type) {
-	case SDL_FINGERDOWN:
-	case SDL_FINGERUP:
-	case SDL_FINGERMOTION:
-	case SDL_MULTIGESTURE:
-		return 0;
-	default:
-		return 1;
-	}
-}
-
 /*
  * Hier sind die Basisfunktionen zur Initialisierung der
  * Schnittstelle untergebracht
  * -> init,open,close
  */
-bool dr_os_init(const int*)
+bool dr_os_init(const int* /* unused parameter */)
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0) {
+	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		return false;
 	}
@@ -63,7 +47,18 @@ bool dr_os_init(const int*)
 	sys_event.type = SIM_NOEVENT;
 	sys_event.code = 0;
 
-	SDL_SetEventFilter(filter_SDL_event, NULL);
+	// Disable events that are fired frequently that we aren't interested in.
+	// The internal_GetEvents function expects that events excluding SDL_MOUSEMOTION
+	// come in approximately one at a time and are all more or less interesting.
+	SDL_EventState( SDL_TEXTEDITING, SDL_DISABLE );
+	SDL_EventState( SDL_FINGERDOWN, SDL_DISABLE );
+	SDL_EventState( SDL_FINGERUP, SDL_DISABLE );
+	SDL_EventState( SDL_FINGERMOTION, SDL_DISABLE );
+	SDL_EventState( SDL_DOLLARGESTURE, SDL_DISABLE );
+	SDL_EventState( SDL_DOLLARRECORD, SDL_DISABLE );
+	SDL_EventState( SDL_MULTIGESTURE, SDL_DISABLE );
+	SDL_EventState( SDL_CLIPBOARDUPDATE, SDL_DISABLE );
+	SDL_EventState( SDL_DROPFILE, SDL_DISABLE );
 	SDL_StartTextInput();
 
 	atexit(SDL_Quit); // clean up on exit
