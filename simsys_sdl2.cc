@@ -370,6 +370,8 @@ static void internal_GetEvents(bool const wait)
 
 		case SDL_KEYDOWN:
 		{
+			sys_event.type    = SIM_KEYBOARD;
+			sys_event.key_mod = ModifierKeys();
 			unsigned long code;
 #ifdef _WIN32
 			// SDL doesn't set numlock state correctly on startup. Revert to win32 function as workaround.
@@ -422,11 +424,15 @@ static void internal_GetEvents(bool const wait)
 				case SDLK_PAUSE:    code = 16;                            break;
 
 				default:
-					code = 0;
+					// Only interpret text events if control is pressed. Otherwise,
+					// the SDL_TEXTINPUT event is responsible for handling them.
+					if (sys_event.key_mod&2 && sym >= SDLK_a && sym <= SDLK_z) {
+						code = sym;
+					} else {
+						code = 0;
+					}
 			}
-			sys_event.type    = SIM_KEYBOARD;
 			sys_event.code    = code;
-			sys_event.key_mod = ModifierKeys();
 			break;
 		}
 
