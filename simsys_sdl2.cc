@@ -77,6 +77,14 @@ resolution dr_query_screen_resolution()
 	return res;
 }
 
+// Makes sure that width of our textures is a multiple of 16 to match the
+// alignment requirements for OpenGL textures, avoiding garbled rendering.
+// See http://www.opengl.org/wiki/Common_Mistakes#Texture_upload_and_pixel_reads
+static int round_width(int w)
+{
+  return (w + 15) & 0x7FF0;
+}
+
 bool internal_create_surfaces() {
 	// The pixel format needs to match the graphics code within simgraph16.cc.
 	// Note that alpha is handled by simgraph16, not by SDL.
@@ -103,6 +111,7 @@ bool internal_create_surfaces() {
 // open the window
 int dr_os_open(int w, int const h, int const fullscreen)
 {
+	w = round_width(w);
 	width = w;
 	height = h;
 
@@ -156,6 +165,7 @@ int dr_textur_resize(unsigned short** const textur, int w, int const h)
 	SDL_UnlockTexture(screen_tx);
 
 	display_set_actual_width( w );
+	w = round_width(w);
 
 	if(  w!=screen->w  ||  h!=screen->h  ) {
 
